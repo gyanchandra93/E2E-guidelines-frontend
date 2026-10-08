@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding the E2E Test Plan Guidance</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;line-height:1.65;max-width:900px;margin:auto;padding:40px 24px;color:#24292f}
+h1{font-size:30px} h2{margin-top:32px;font-size:22px} h3{margin-top:24px}
+.intro,.important,.summary{padding:18px 20px;border-radius:8px}
+.intro{background:#f6f8fa;border-left:4px solid #57606a}
+.important{background:#fff8c5;border-left:4px solid #d4a72c}
+.summary{background:#ddf4ff;border-left:4px solid #0969da;font-size:17px}
+pre{background:#f6f8fa;padding:16px;border-radius:8px;overflow-x:auto}
+blockquote{border-left:4px solid #d0d7de;padding-left:16px;color:#57606a}
+.flow{text-align:center;font-weight:600;background:#f6f8fa;padding:14px;border-radius:8px;margin:18px 0}
+</style>
+</head>
+<body>
+
+<h1>Understanding the E2E Test Plan Guidance</h1>
+
+<div class="intro">
+The person is basically giving <strong>guidance on how the team should prepare E2E test plans before writing Playwright tests</strong>.
+</div>
+
+<h2>1. Don't immediately start writing Playwright code</h2>
+<p>The author says:</p>
+<blockquote>“before we start writing E2E tests ... please put together a test plan for each ticket”</blockquote>
+<p>Meaning: <strong>For each feature/ticket, first decide what exactly needs to be tested.</strong></p>
+<p>Don't jump directly into Playwright code such as:</p>
+<pre><code>test("should ...", async ({ page }) =&gt; {
+  // Playwright code
+});</code></pre>
+<p>First create a small test plan.</p>
+
+<h2>2. They want one test plan for each ticket</h2>
+<p>Suppose you have two tickets:</p>
+<ul><li>Ticket A → Add a new custom field</li><li>Ticket B → Add image upload functionality</li></ul>
+<h3>Ticket A – Test Plan</h3>
+<ul><li>User can add a custom field.</li><li>Custom field appears in the table.</li><li>User can edit the field.</li><li>User cannot save when required information is missing.</li></ul>
+<h3>Ticket B – Test Plan</h3>
+<ul><li>User can upload an image.</li><li>Supported image formats work.</li><li>Unsupported formats are rejected.</li><li>User can delete the image.</li></ul>
+<p>Only after this should you write the Playwright tests.</p>
+
+<h2>3. Base tests on a real user action → expected outcome</h2>
+<div class="important"><strong>This is probably the most important part of the message.</strong></div>
+<p>They give an example:</p>
+<blockquote>“creating a customer should queue exactly one welcome email with the expected recipient and subject.”</blockquote>
+<div class="flow">User does something → System should produce a specific result</div>
+<pre><code>Action:
+Create a customer
+
+Expected result:
+Exactly one welcome email is queued
+
+And:
+- Email goes to the correct recipient
+- Email has the correct subject</code></pre>
+<p>They don't want vague tests like <em>"Check that customer creation works."</em> They want something measurable and specific.</p>
+
+<h2>4. Include dependencies and setup requirements</h2>
+<p>The test plan should explain <strong>setup, dependencies, and cleanup</strong>.</p>
+<pre><code>Setup:
+- User must be logged in
+- Project must already exist
+- Test data must exist
+
+Test:
+- Create customer
+
+Expected:
+- Customer appears in the list
+
+Cleanup:
+- Delete the test customer</code></pre>
+<p>This helps another developer understand <strong>how to run the test</strong>.</p>
+
+<h2>5. Think about negative scenarios too</h2>
+<p>Don't only test the <strong>happy path</strong>. Think about what should happen and what should <strong>not</strong> happen.</p>
+<h3>Happy path</h3>
+<pre><code>User uploads a PNG
+        ↓
+Upload succeeds
+        ↓
+Image appears</code></pre>
+<h3>Negative path</h3>
+<pre><code>User uploads an unsupported file
+        ↓
+Upload should fail
+        ↓
+Error message should appear
+        ↓
+Image should NOT be added</code></pre>
+<p>The negative test is important because it can catch regressions.</p>
+
+<h2>6. Pay special attention to permissions and filtering</h2>
+<p>The author specifically mentions <strong>permissions or filtering</strong>.</p>
+<pre><code>User without edit permission:
+
+Expected:
+- Edit option should not be available
+- User should not be able to modify the field</code></pre>
+<p>For filtering:</p>
+<pre><code>Apply filter: Status = Active
+
+Expected:
+- Active records are displayed
+- Inactive records are NOT displayed</code></pre>
+<p>So the E2E tests should verify <strong>business rules</strong>, not just whether buttons can be clicked.</p>
+
+<h2>7. Capture the reasoning before coding</h2>
+<p>The author says:</p>
+<blockquote>“Please capture that reasoning in the tickets before coding”</blockquote>
+<p>This means the <strong>Linear ticket itself should contain the test plan</strong>.</p>
+<pre><code>E2E Test Plan
+
+1. Given a user with edit permission
+2. When they open the Test Checklist
+3. And update the Serial Number field
+4. Then the updated value should be displayed
+
+Negative scenario:
+5. Given a user without edit permission
+6. Then the field should not be editable</code></pre>
+<p>Another developer should be able to look at the ticket and understand: <strong>"These are the behaviors our Playwright tests need to prove."</strong></p>
+
+<h2>Why are they asking for this?</h2>
+<p>The author wants to avoid tests that are simply:</p>
+<pre><code>click button
+click button
+fill textbox
+expect something</code></pre>
+<p>without knowing <strong>what behavior the test is supposed to protect</strong>.</p>
+<div class="flow">Business requirement → Test scenario → Expected behavior → Playwright implementation</div>
+
+<h2>In one sentence</h2>
+<div class="summary">
+<strong>The author is saying:</strong><br><br>
+“Before writing Playwright code, clearly define what user behavior we're testing, what should happen, what should not happen, what setup is required, and what regression the test is protecting against.”
+</div>
+
+<h2>One important distinction</h2>
+<p><strong>The test plan is not the Playwright code itself.</strong> It is the <strong>blueprint</strong> from which you later write the Playwright test.</p>
+<div class="flow">Test Plan → Playwright Test → Automated E2E Test</div>
+
+</body>
+</html>
